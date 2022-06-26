@@ -246,3 +246,11 @@ WHERE survival_rate IS NULL
 SELECT *
 FROM aviation_accidents
 ORDER BY survival_rate
+
+
+--				Add Total Injuries
+ALTER TABLE aviation_accidents
+ADD total_injuries float
+
+UPDATE aviation_accidents
+SET total_injuries = Total#Minor#Injuries + Total#Serious#Injuries + Total#Fatal#Injuries
