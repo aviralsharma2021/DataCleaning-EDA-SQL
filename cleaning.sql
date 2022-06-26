@@ -44,7 +44,7 @@ SET Location = SUBSTRING(Location, 1, CHARINDEX(',', Location)-1)
 WHERE Location LIKE '%,%'		-- Takes care of locations where state or country is missing
 
 UPDATE AviationData
-SET state_country = SUBSTRING(Location, CHARINDEX(',', Location)+1, len(Location))
+SET state_country = TRIM(SUBSTRING(Location, CHARINDEX(',', Location)+1, len(Location)))
 WHERE Location LIKE '%,%'
 
 
