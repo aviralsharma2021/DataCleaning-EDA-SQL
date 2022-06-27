@@ -47,6 +47,21 @@ UPDATE AviationData
 SET state_country = TRIM(SUBSTRING(Location, CHARINDEX(',', Location)+1, len(Location)))
 WHERE Location LIKE '%,%'
 
+--	Checking state_country to be correct after split
+SELECT DISTINCT state_country
+FROM AviationData
+WHERE Country = 'United States' AND LEN(state_country) !=2 AND state_country NOT IN ('LA,', '')
+
+--	Correcting state where state_country is 'LA,'
+UPDATE AviationData
+SET state_country = 'LA'
+WHERE state_country = 'LA,'
+
+--	Corrective other US states with additional location info
+UPDATE AviationData
+SET state_country = TRIM(SUBSTRING(state_country, CHARINDEX(',', state_country)+1, len(state_country)))
+WHERE state_country LIKE '%,%' AND Country = 'United States' AND LEN(state_country) !=2 AND state_country != 'LA,'
+
 
 
 --				Removing time from event date
