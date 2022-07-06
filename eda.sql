@@ -16,12 +16,13 @@ Datasets:
 
 SELECT *
 FROM aviation_accidents
+ORDER BY Country
 
 
 --	Looking at most dangerous to fly countries in the 21st Century
 SELECT Country, COUNT(*) AS total_accidents
 FROM aviation_accidents
-WHERE EventDate > CONVERT(DATE, '1999-12-31')
+--WHERE EventDate > CONVERT(DATE, '1999-12-31')
 GROUP BY Country
 ORDER BY total_accidents DESC
 
@@ -86,18 +87,40 @@ GROUP BY Purpose#of#flight
 ORDER BY total_accidents DESC
 
 
--- creating a view for flights with Purpose#of#flight - Personal or business,
--- It is redundant to include Purpose#of#flight column, thus its better to create a temp table
-
-SELECT * INTO #
-
-CREATE VIEW [commercial_accidents] AS
-SELECT * 
-FROM aviation_accidents
-WHERE Purpose#of#flight IN ('Personal', 'Business');
+-- creating a view for flights with Purpose#of#flight - Personal or business in 21st century
 
 SELECT *
-FROM commercial_accidents
+FROM USState_Codes
+
+SELECT state_country, Location, Country
+FROM aviation_accidents
+WHERE Country = 'United States' AND state_country = ''
+
+ALTER TABLE USState_Codes
+ADD Country nvarchar(255)
+
+UPDATE USState_Codes
+SET Country = 'United States'
+
+
+CREATE VIEW [comm_accidents1] AS
+WITH map_drill (EventDate, Country, TotalInjuries, TotalFatalInjuries, Location) AS
+(
+SELECT EventDate, aa.Country, total_injuries, Total#Fatal#Injuries, 
+CASE WHEN aa.Country = 'United States' THEN US_State
+ELSE aa.Country
+END AS stateOrCountry
+FROM aviation_accidents AS aa
+LEFT OUTER JOIN USState_Codes AS sc ON aa.state_country = sc.Abbreviation AND aa.Country = sc.Country
+WHERE EventDate > CONVERT(DATE, '1999-12-31')
+)
+SELECT Country, COUNT(TotalInjuries) AS TotalInjuries, COUNT(TotalFatalInjuries) AS TotalFatalInjuries, Location
+FROM map_drill
+GROUP BY Location, Country
+
+
+SELECT *
+FROM comm_accidents
 
 
 
