@@ -26,6 +26,19 @@ WHERE Country != 'UNKNOWN'
 GROUP BY Country
 ORDER BY total_accidents DESC;
 
+--	Creating Country Column in US States table to enable joins for state names
+SELECT *
+FROM USState_Codes;
+
+SELECT state_country, Location, Country
+FROM aviation_accidents
+WHERE Country = 'United States' AND state_country = '';
+
+ALTER TABLE USState_Codes
+ADD Country nvarchar(255);
+
+UPDATE USState_Codes
+SET Country = 'United States';
 
 --	Creating CTE for above countries accidents in the 21st Century as well as total_accidents
 --	Could have been accomplished using temp table but views do not support temp table
@@ -38,7 +51,8 @@ SELECT Country, COUNT(*) AS total_accidents_21C
 FROM aviation_accidents
 WHERE Country != 'UNKNOWN' AND EventDate > CONVERT(DATE, '1999-12-31')
 GROUP BY Country
-), dan_countries_all (Country, total_accidents)
+), 
+dan_countries_all (Country, total_accidents)
 AS
 (
 SELECT Country, COUNT(*) AS total_accidents
@@ -56,11 +70,33 @@ FROM dangerous_countries;
 
 
 --	Looking at statewise accidents in United States in 21st century
-SELECT TOP(10) state_country, COUNT(*) AS total_accidents
+CREATE VIEW [dangerous_US_states] AS
+WITH dang_states_21 (state_country, total_accidents)
+AS
+(
+SELECT USState_Codes.US_State, COUNT(*) AS total_accidents
 FROM aviation_accidents
-WHERE EventDate > CONVERT(DATE, '1999-12-31') AND Country = 'United States'
-GROUP BY state_country
+JOIN USState_Codes ON aviation_accidents.state_country = USState_Codes.Abbreviation
+WHERE EventDate > CONVERT(DATE, '1999-12-31') AND aviation_accidents.Country = 'United States'
+GROUP BY US_State
+--ORDER BY total_accidents DESC
+),
+dang_states_fatal (state_country, total_injuries, fatal_injuries, mean_survival_rate)
+AS
+(
+SELECT  USState_Codes.US_State, SUM(total_injuries) AS total_injuries, SUM(Total#Fatal#Injuries) AS fatal_injuries, AVG(survival_rate) AS mean_survival_rate
+FROM aviation_accidents
+JOIN USState_Codes ON aviation_accidents.state_country = USState_Codes.Abbreviation
+WHERE EventDate > CONVERT(DATE, '1999-12-31') AND aviation_accidents.Country = 'United States'
+GROUP BY US_State
+--ORDER BY fatal_injuries DESC
+)
+SELECT TOP(10) ds_all.state_country, total_injuries, total_accidents, fatal_injuries, mean_survival_rate 
+FROM dang_states_21 AS ds_21
+JOIN dang_states_fatal AS ds_all ON ds_21.state_country = ds_all.state_country 
 ORDER BY total_accidents DESC;
+
+select * from dangerous_US_states
 
 --	Updated the cleaning.sql script to trim whitespace before state name
 --	UPDATE aviation_accidents
@@ -94,11 +130,13 @@ WHERE state_country LIKE '%,%' AND Country = 'United States' AND LEN(state_count
 
 
 -- Rolling Count of Injuries by State and Date for USA
-SELECT	EventDate, Country, state_country, Location, total_injuries,
+CREATE VIEW [us_accidents_rollingcount] AS
+SELECT	EventDate, state_country, US_State, Location, total_injuries,
 		SUM(total_injuries) OVER (PARTITION BY state_country ORDER BY state_country, EventDate) AS rolling_injury_count
-FROM aviation_accidents
-WHERE Country = 'United States' AND EventDate > CONVERT(DATE, '1999-12-31') AND len(state_country)=2 -- Leaving OUT states where state not available
-ORDER BY state_country, EventDate;
+FROM aviation_accidents AS aa
+JOIN USState_Codes AS uc ON aa.Country = uc.Country AND aa.state_country = uc.Abbreviation
+WHERE aa.Country = 'United States' AND EventDate > CONVERT(DATE, '1999-12-31') AND len(state_country)=2 -- Leaving OUT states where state not available
+--ORDER BY US_State, EventDate;
 
 --	Looking at country wise total_injuries (with rolling count) for 21st Century
 SELECT	Country, Location, EventDate , total_injuries,
@@ -117,21 +155,6 @@ ORDER BY total_accidents DESC;
 
 
 -- creating a view for flights with Purpose#of#flight - Personal or business in 21st century
-
-SELECT *
-FROM USState_Codes;
-
-SELECT state_country, Location, Country
-FROM aviation_accidents
-WHERE Country = 'United States' AND state_country = '';
-
-ALTER TABLE USState_Codes
-ADD Country nvarchar(255);
-
-UPDATE USState_Codes
-SET Country = 'United States';
-
-
 CREATE VIEW [comm_accidents] AS
 WITH map_drill (EventDate, Country, TotalInjuries, TotalFatalInjuries, Location) AS
 (
@@ -153,10 +176,3 @@ FROM comm_accidents
 ORDER BY Country;
 
 
---				Create temp table for predicting flight phase
-
-
-
-
-
---				CTE for cessna aircraft
