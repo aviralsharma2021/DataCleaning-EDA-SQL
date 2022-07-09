@@ -9,3 +9,5 @@ This Project is to showcase my SQL skillset
 The dataset used was downloaded from Kaggle, the cleaning.sql file contains the data cleaning script in sql.
 
 The dataset needs to be imported to SQL Server (syntax for different DBMS may be different for some queries)
+
+![alt text](https://github.com/aviralsharma2021/DataCleaning-EDA-SQL/blob/main/images/'PowerBI report 1.png'?raw=true)
