@@ -10,4 +10,5 @@ The dataset used was downloaded from Kaggle, the cleaning.sql file contains the 
 
 The dataset needs to be imported to SQL Server (syntax for different DBMS may be different for some queries)
 
-![alt text](https://github.com/aviralsharma2021/DataCleaning-EDA-SQL/blob/main/images/'PowerBI report 1.png'?raw=true)
+
+![powerBI report 1](https://user-images.githubusercontent.com/107967004/178120236-e1e4dab0-09b0-4e32-a656-799e0b8aecf8.png)
